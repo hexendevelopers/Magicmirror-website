@@ -4,7 +4,7 @@ import { ref, onValue } from 'firebase/database';
 import { db } from '../lib/firebase';
 
 interface Program {
-  id: string;
+  id?: string;
   title: string;
   date: string;
   timestamp: number;
