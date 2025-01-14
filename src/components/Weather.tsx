@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 interface WeatherData {
   temp: number;
@@ -15,6 +16,31 @@ interface ForecastData {
   icon: string;
   day: string;
   description: string;
+}
+
+interface WeatherItem {
+  dt: number;
+  main: {
+    temp: number;
+  };
+  weather: Array<{
+    description: string;
+    icon: string;
+  }>;
+}
+
+interface CurrentWeatherResponse {
+  main: {
+    temp: number;
+  };
+  weather: Array<{
+    description: string;
+    icon: string;
+  }>;
+}
+
+interface ForecastResponse {
+  list: WeatherItem[];
 }
 
 export default function Weather() {
@@ -50,15 +76,15 @@ export default function Weather() {
         const city = 'Mannarkkad,IN'; // You can change this to your city
         // Fetch current weather
         const currentResponse = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`
+          `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
         );
-        const currentData = await currentResponse.json();
+        const currentData: CurrentWeatherResponse = await currentResponse.json();
 
         // Fetch 5-day forecast
         const forecastResponse = await fetch(
           `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${API_KEY}`
         );
-        const forecastData = await forecastResponse.json();
+        const forecastData: ForecastResponse = await forecastResponse.json();
 
         setWeather({
           temp: currentData.main.temp,
@@ -67,9 +93,14 @@ export default function Weather() {
         });
 
         // Process forecast data for next 5 days
-        const dailyForecasts = new Map();
+        const dailyForecasts = new Map<string, {
+          temps: number[];
+          icons: string[];
+          descriptions: string[];
+          date: Date;
+        }>();
         
-        forecastData.list.forEach((item: any) => {
+        forecastData.list.forEach((item: WeatherItem) => {
           const date = new Date(item.dt * 1000);
           const day = date.toDateString();
           
@@ -83,6 +114,7 @@ export default function Weather() {
           }
           
           const dayData = dailyForecasts.get(day);
+          if (!dayData) return; 
           dayData.temps.push(item.main.temp);
           dayData.icons.push(item.weather[0].icon);
           dayData.descriptions.push(item.weather[0].description);
@@ -128,10 +160,11 @@ export default function Weather() {
 
           {/* Current weather */}
           <div className="flex items-center gap-3 mb-1">
-            <img 
+            <Image 
               src={`https://openweathermap.org/img/wn/${weather.icon}.png`}
               alt={weather.description}
-              className="w-20 h-20"
+              width={50}
+              height={50}
             />
             <span className="text-8xl font-light">{Math.round(weather.temp)}°C</span>
           </div>
@@ -140,18 +173,19 @@ export default function Weather() {
           </div>
 
           {/* Daily Forecast */}
-          <div className="flex flex-col gap-2">
-            {forecast.map((item, index) => (
-              <div key={index} className="flex items-center gap-8">
-                <div className="text-xl font-light w-20">{item.day}</div>
-                <img 
-                  src={`https://openweathermap.org/img/wn/${item.icon}.png`}
-                  alt={item.description}
-                  className="w-10 h-10"
+          <div className="flex flex-col gap-2 mt-4 items-end">
+            {forecast.map((day, index) => (
+              <div key={index} className="flex items-center gap-4">
+                <div className="text-lg">{day.day}</div>
+                <div hidden className="capitalize text-lg">{day.description}</div>
+                <Image
+                  src={`https://openweathermap.org/img/wn/${day.icon}.png`}
+                  alt={day.description}
+                  width={40}
+                  height={40}
                 />
-                <div className="text-xl font-light w-16 flex gap-2">
-                  <span>{item.temp.max}°</span>
-                  <span className="text-gray-400">{item.temp.min}°</span>
+                <div className="text-lg">
+                  <span>{day.temp.max}°C</span>
                 </div>
               </div>
             ))}
