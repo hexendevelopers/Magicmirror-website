@@ -10,6 +10,11 @@ interface Program {
   timestamp: number;
 }
 
+interface DatabaseSnapshot {
+  val(): { [key: string]: Program };
+  exists(): boolean;
+}
+
 const CalendarIcon = () => (
   <svg 
     className="w-5 h-5 text-white/70" 
@@ -42,12 +47,12 @@ export default function CollegeCalendar() {
     const programsRef = ref(db, 'programs');
 
     // Listen for changes in real-time
-    const unsubscribe = onValue(programsRef, (snapshot) => {
+    const unsubscribe = onValue(programsRef, (snapshot: DatabaseSnapshot) => {
       if (snapshot.exists()) {
         const programsData = snapshot.val();
         // Convert object to array and sort by timestamp
         const programsArray = Object.entries(programsData)
-          .map(([id, data]: [string, any]) => ({
+          .map(([id, data]: [string, Program]) => ({
             id,
             ...data
           }))
