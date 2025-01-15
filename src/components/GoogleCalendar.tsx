@@ -1,6 +1,7 @@
 'use client';
+
 import { useState, useEffect } from 'react';
-import { ref, onValue } from 'firebase/database';
+import { ref, onValue, DataSnapshot } from 'firebase/database';
 import { db } from '../lib/firebase';
 
 interface Program {
@@ -10,16 +11,11 @@ interface Program {
   timestamp: number;
 }
 
-interface DatabaseSnapshot {
-  val(): { [key: string]: Program };
-  exists(): boolean;
-}
-
 const CalendarIcon = () => (
-  <svg 
-    className="w-5 h-5 text-white/70" 
-    fill="none" 
-    stroke="currentColor" 
+  <svg
+    className="w-5 h-5 text-white/70"
+    fill="none"
+    stroke="currentColor"
     viewBox="0 0 24 24"
   >
     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth="2" />
@@ -43,16 +39,13 @@ export default function CollegeCalendar() {
   };
 
   useEffect(() => {
-    // Reference to the programs in Firebase
     const programsRef = ref(db, 'programs');
 
-    // Listen for changes in real-time
-    const unsubscribe = onValue(programsRef, (snapshot: DatabaseSnapshot) => {
+    const unsubscribe = onValue(programsRef, (snapshot: DataSnapshot) => {
       if (snapshot.exists()) {
-        const programsData = snapshot.val();
-        // Convert object to array and sort by timestamp
+        const programsData = snapshot.val() as Record<string, Program>;
         const programsArray = Object.entries(programsData)
-          .map(([id, data]: [string, Program]) => ({
+          .map(([id, data]) => ({
             id,
             ...data
           }))
@@ -65,19 +58,16 @@ export default function CollegeCalendar() {
       setLoading(false);
     });
 
-    // Cleanup subscription
     return () => unsubscribe();
   }, []);
 
   return (
     <div className="text-white">
-      {/* Title */}
       <div className="mb-4">
         <h2 className="text-3xl font-light mb-1">College Programs</h2>
-        <div className="h-px bg-white/30 "></div>
+        <div className="h-px bg-white/30"></div>
       </div>
 
-      {/* Programs */}
       <div className="flex flex-col gap-3">
         {loading ? (
           <div className="text-xl font-light">Loading programs...</div>
