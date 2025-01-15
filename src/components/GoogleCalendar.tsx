@@ -44,11 +44,13 @@ export default function CollegeCalendar() {
     const unsubscribe = onValue(programsRef, (snapshot: DataSnapshot) => {
       if (snapshot.exists()) {
         const programsData = snapshot.val() as Record<string, Program>;
-        const programsArray = Object.entries(programsData)
-          .map(([id, data]: [string, Program]) => ({
+        const programsArray = Object.entries(programsData).map((entry): Program => {
+          const [id, data] = entry;
+          return {
             id,
             ...data
-          }))
+          };
+        })
           .sort((a, b) => a.timestamp - b.timestamp);
 
         setPrograms(programsArray);
