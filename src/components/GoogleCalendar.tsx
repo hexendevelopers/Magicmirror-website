@@ -45,7 +45,7 @@ export default function CollegeCalendar() {
       if (snapshot.exists()) {
         const programsData = snapshot.val() as Record<string, Program>;
         const programsArray = Object.entries(programsData)
-          .map(([id, data]) => ({
+          .map(([id, data]: [string, Program]) => ({
             id,
             ...data
           }))
